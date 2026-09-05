@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "53122018010",
+    "project_id": "duocauroracare",
+    "storage_bucket": "duocauroracare.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:53122018010:android:3470f7f9422ce6e40c93e3",
+        "android_client_info": {
+          "package_name": "com.example.aurora_care"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhE24PcIGLqD0FoRksAhFn_eO_MtHBYpE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

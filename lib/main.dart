@@ -1,121 +1,153 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  // Necesario para poder usar 'await' antes de runApp
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa Firebase usando la configuración generada por flutterfire configure
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'AuroraCare - Spike',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const SpikeScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class SpikeScreen extends StatefulWidget {
+  const SpikeScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<SpikeScreen> createState() => _SpikeScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _SpikeScreenState extends State<SpikeScreen> {
+  // IMPORTANTE: 10.0.2.2 es la IP especial que el EMULADOR Android usa
+  // para referirse a "localhost" de tu Mac (no es un error de tipeo).
+  // Si algún día pruebas en un celular físico conectado por USB o WiFi,
+  // esto debe cambiar a la IP real de tu Mac en la red local.
+  static const String baseUrl = 'http://10.0.2.2:8000';
 
-  void _incrementCounter() {
+  String _resultado = 'Presiona el botón para probar el spike completo';
+  bool _cargando = false;
+
+  Future<void> _ejecutarSpike() async {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _cargando = true;
+      _resultado = 'Paso 1: probando /health...';
     });
+
+    try {
+      // ---------- Paso 1: /health ----------
+      final healthResponse = await http.get(Uri.parse('$baseUrl/health'));
+      if (healthResponse.statusCode != 200) {
+        throw Exception('Health check falló: ${healthResponse.statusCode}');
+      }
+      setState(() => _resultado = 'Paso 1 OK. Paso 2: /session/analyze...');
+
+      // ---------- Paso 2: /session/analyze ----------
+      final analyzeResponse = await http.post(
+        Uri.parse('$baseUrl/session/analyze'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'session_uuid': 'test-uuid-flutter-001',
+          'game_type': 'memorice',
+          'nivel': 1,
+          'metricas': {
+            'tiempo_total_seg': 120,
+            'errores': 3,
+            'intentos': 15,
+            'tasa_acierto_pct': 70,
+          },
+        }),
+      );
+      if (analyzeResponse.statusCode != 200) {
+        throw Exception('Analyze falló: ${analyzeResponse.statusCode}');
+      }
+      setState(() => _resultado = 'Paso 2 OK. Paso 3: /report/generate (llamando a OpenAI)...');
+
+      // ---------- Paso 3: /report/generate ----------
+      final reportResponse = await http.post(
+        Uri.parse('$baseUrl/report/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'periodo_dias': 28,
+          'resumen_dominios': {
+            'memoria': {
+              'score_promedio': 68.2,
+              'senal': 'estable',
+              'sesiones': 8,
+            },
+            'atencion': {
+              'score_promedio': 74.5,
+              'senal': 'mejora',
+              'sesiones': 7,
+            },
+            'praxias': {
+              'score_promedio': 61.0,
+              'senal': 'atencion',
+              'sesiones': 6,
+            },
+          },
+        }),
+      );
+
+      if (reportResponse.statusCode != 200) {
+        throw Exception('Report falló: ${reportResponse.statusCode}');
+      }
+
+      final data = jsonDecode(utf8.decode(reportResponse.bodyBytes));
+      final textoReporte = data['reporte_texto'] as String?;
+
+      setState(() {
+        _cargando = false;
+        _resultado = textoReporte ?? 'El backend respondió pero sin texto de reporte (revisar Plan B).';
+      });
+    } catch (e) {
+      setState(() {
+        _cargando = false;
+        _resultado = 'Error en el spike: $e';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      appBar: AppBar(title: const Text('AuroraCare - Spike técnico')),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('You have pushed the button this many times:'),
+            ElevatedButton(
+              onPressed: _cargando ? null : _ejecutarSpike,
+              child: Text(_cargando ? 'Ejecutando...' : 'Probar spike completo'),
+            ),
+            const SizedBox(height: 24),
+            if (_cargando) const Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 16),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              _resultado,
+              style: const TextStyle(fontSize: 16),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
