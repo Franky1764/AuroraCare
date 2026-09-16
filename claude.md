@@ -91,7 +91,7 @@ siempre "caregiver_dashboard/"; nunca "auth/" plano, siempre dividido en
   en este archivo, siempre confirmar en Jira o preguntar).
 
 ## Documentos de referencia
-- ARCHITECTURE.md — arquitectura completa (fuente de verdad para estructura)
+- AuroraCare_ARCHITECTURE_v2.md — arquitectura completa (fuente de verdad para estructura)
 - SCORING.md — sistema de scoring cognitivo local
 - USER_FLOWS.md — flujos F1 a F11
 - Flujo_Trabajo_Git_AuroraCare.md — convención de ramas y Pull Requests
