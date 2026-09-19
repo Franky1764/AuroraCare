@@ -1,12 +1,13 @@
 // lib/presentation/auth/elder/register_screen.dart
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 /// Pantalla de registro del adulto mayor (F1 — auth/elder, SCRUM-93).
+/// Pantalla 100% visual: solo valida formato de formulario en esta capa,
+/// sin ninguna llamada a backend/base de datos.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({
     super.key,
@@ -30,11 +31,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   bool _obscurePassword = true;
-  bool _isLoading = false;
-
-  /// Error proveniente de FirebaseAuth (o de un fallo genérico) que se
-  /// muestra bajo el campo Correo hasta que el usuario vuelva a intentar.
-  String? _emailServerError;
 
   @override
   void dispose() {
@@ -52,9 +48,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validateEmail(String? value) {
-    if (_emailServerError != null) {
-      return _emailServerError;
-    }
     final email = value?.trim() ?? '';
     if (email.isEmpty || !_emailRegex.hasMatch(email)) {
       return 'Ingresa un correo válido';
@@ -69,54 +62,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  String _mapFirebaseAuthError(String code) {
-    switch (code) {
-      case 'email-already-in-use':
-        return 'Este correo ya tiene una cuenta. ¿Quieres iniciar sesión?';
-      case 'invalid-email':
-        return 'Ingresa un correo válido';
-      case 'weak-password':
-        return 'La contraseña debe tener al menos 6 caracteres';
-      default:
-        return 'Algo salió mal. Intenta de nuevo.';
-    }
-  }
-
-  Future<void> _handleRegister() async {
+  void _handleRegister() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (widget.onRegisterSuccess != null) {
-        widget.onRegisterSuccess!();
-      } else {
-        // TODO: conectar con GoRouter cuando esté implementado el router en core/router/
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _emailServerError = _mapFirebaseAuthError(e.code);
-      });
-      _formKey.currentState!.validate();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _emailServerError = 'Algo salió mal. Intenta de nuevo.';
-      });
-      _formKey.currentState!.validate();
+    if (widget.onRegisterSuccess != null) {
+      widget.onRegisterSuccess!();
+    } else {
+      // TODO: conectar con GoRouter cuando esté implementado el router en core/router/
+      // TODO: conectar con backend/Firebase cuando Daniela implemente data/domain (AuthRepository)
     }
   }
 
@@ -189,11 +144,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: _decoration('rosa@correo.cl'),
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
-                  onChanged: (_) {
-                    if (_emailServerError != null) {
-                      setState(() => _emailServerError = null);
-                    }
-                  },
                   validator: _validateEmail,
                 ),
                 const SizedBox(height: 20),
@@ -219,17 +169,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _handleRegister,
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppColors.textOnPrimary,
-                          ),
-                        )
-                      : const Text('Crear mi cuenta'),
+                  onPressed: _handleRegister,
+                  child: const Text('Crear mi cuenta'),
                 ),
                 const SizedBox(height: 16),
                 Center(
