@@ -65,4 +65,13 @@ class AppTextStyles {
         fontSize: 14,
         fontWeight: FontWeight.w600,
       );
+
+  /// Mensaje de error bajo un campo de formulario.
+  /// Excepción intencional al mínimo de 18sp: es texto transitorio y de
+  /// espacio acotado bajo el campo, no contenido principal de la pantalla.
+  static TextStyle get fieldError => _base.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: AppColors.error,
+      );
 }

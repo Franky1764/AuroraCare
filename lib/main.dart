@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/onboarding/welcome_screen.dart';
 import 'presentation/onboarding/role_selection_screen.dart';
+import 'presentation/auth/elder/register_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +30,16 @@ class AuroraCareApp extends StatelessWidget {
       home: Builder(
         builder: (context) => WelcomeScreen(
           onContinue: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+            MaterialPageRoute(
+              builder: (context) => RoleSelectionScreen(
+                onSelectElder: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),
