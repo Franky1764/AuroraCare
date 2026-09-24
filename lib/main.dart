@@ -8,6 +8,8 @@ import 'presentation/onboarding/role_selection_screen.dart';
 import 'presentation/auth/elder/register_screen.dart';
 import 'presentation/auth/elder/login_screen.dart';
 import 'presentation/auth/elder/forgot_password_screen.dart';
+import 'presentation/onboarding/medical_disclaimer_screen.dart';
+import 'presentation/onboarding/mode_selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,11 +41,48 @@ class AuroraCareApp extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => RegisterScreen(
+                        onRegisterSuccess: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MedicalDisclaimerScreen(
+                                onAccept: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ModeSelectionScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
                         onGoToLogin: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => LoginScreen(
+                                onLoginSuccess: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MedicalDisclaimerScreen(
+                                            onAccept: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const ModeSelectionScreen(),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                    ),
+                                  );
+                                },
                                 onGoToRegister: () {
                                   Navigator.push(
                                     context,
