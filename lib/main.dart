@@ -9,6 +9,7 @@ import 'presentation/auth/elder/register_screen.dart';
 import 'presentation/auth/elder/login_screen.dart';
 import 'presentation/auth/elder/forgot_password_screen.dart';
 import 'presentation/onboarding/medical_disclaimer_screen.dart';
+import 'presentation/onboarding/mode_selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +45,17 @@ class AuroraCareApp extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const MedicalDisclaimerScreen(),
+                              builder: (context) => MedicalDisclaimerScreen(
+                                onAccept: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ModeSelectionScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           );
                         },
@@ -57,8 +68,18 @@ class AuroraCareApp extends StatelessWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          const MedicalDisclaimerScreen(),
+                                      builder: (context) =>
+                                          MedicalDisclaimerScreen(
+                                            onAccept: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const ModeSelectionScreen(),
+                                                ),
+                                              );
+                                            },
+                                          ),
                                     ),
                                   );
                                 },
