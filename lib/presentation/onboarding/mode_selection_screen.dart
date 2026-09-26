@@ -61,65 +61,78 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 32),
-              Text('¿Cómo quiere usar la app?', style: AppTextStyles.heading),
-              const SizedBox(height: 24),
-              if (_errorMessage != null) ...[
-                _ErrorBanner(
-                  message: _errorMessage!,
-                  onRetry: () => _handleModeTap(_pendingMode!),
+        // Desplazable para que el banner de error no desborde en pantallas bajas.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 32),
+                    Text(
+                      '¿Cómo quiere usar la app?',
+                      style: AppTextStyles.heading,
+                    ),
+                    const SizedBox(height: 24),
+                    if (_errorMessage != null) ...[
+                      _ErrorBanner(
+                        message: _errorMessage!,
+                        onRetry: () => _handleModeTap(_pendingMode!),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    _ModeCard(
+                      key: const ValueKey('mode_card_1'),
+                      isSelected: _selectedMode == 1,
+                      isLoading: _isSaving && _pendingMode == 1,
+                      icon: Icons.play_arrow,
+                      iconBackgroundColor: AppColors.primaryLight,
+                      iconColor: AppColors.primary,
+                      title: 'Solo jugar',
+                      subtitle: 'No se guarda nada',
+                      onTap: () => _handleModeTap(1),
+                    ),
+                    const SizedBox(height: 16),
+                    _ModeCard(
+                      key: const ValueKey('mode_card_2'),
+                      isSelected: _selectedMode == 2,
+                      isLoading: _isSaving && _pendingMode == 2,
+                      icon: Icons.pie_chart,
+                      iconBackgroundColor: AppColors.primaryLight,
+                      iconColor: AppColors.primary,
+                      title: 'Jugar y ver mi progreso',
+                      subtitle: 'Solo usted lo ve',
+                      onTap: () => _handleModeTap(2),
+                    ),
+                    const SizedBox(height: 16),
+                    _ModeCard(
+                      key: const ValueKey('mode_card_3'),
+                      isSelected: _selectedMode == 3,
+                      isLoading: _isSaving && _pendingMode == 3,
+                      icon: Icons.favorite,
+                      iconBackgroundColor: AppColors.primary,
+                      iconColor: AppColors.textOnPrimary,
+                      title:
+                          'Jugar, ver mi progreso y conectar con un cuidador',
+                      subtitle: 'Su cuidador ve un resumen',
+                      onTap: () => _handleModeTap(3),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Puede cambiar esto cuando quiera.',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.bodySecondary,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                const SizedBox(height: 16),
-              ],
-              _ModeCard(
-                key: const ValueKey('mode_card_1'),
-                isSelected: _selectedMode == 1,
-                isLoading: _isSaving && _pendingMode == 1,
-                icon: Icons.play_arrow,
-                iconBackgroundColor: AppColors.primaryLight,
-                iconColor: AppColors.primary,
-                title: 'Solo jugar',
-                subtitle: 'No se guarda nada',
-                onTap: () => _handleModeTap(1),
               ),
-              const SizedBox(height: 16),
-              _ModeCard(
-                key: const ValueKey('mode_card_2'),
-                isSelected: _selectedMode == 2,
-                isLoading: _isSaving && _pendingMode == 2,
-                icon: Icons.pie_chart,
-                iconBackgroundColor: AppColors.primaryLight,
-                iconColor: AppColors.primary,
-                title: 'Jugar y ver mi progreso',
-                subtitle: 'Solo usted lo ve',
-                onTap: () => _handleModeTap(2),
-              ),
-              const SizedBox(height: 16),
-              _ModeCard(
-                key: const ValueKey('mode_card_3'),
-                isSelected: _selectedMode == 3,
-                isLoading: _isSaving && _pendingMode == 3,
-                icon: Icons.favorite,
-                iconBackgroundColor: AppColors.primary,
-                iconColor: AppColors.textOnPrimary,
-                title: 'Jugar, ver mi progreso y conectar con un cuidador',
-                subtitle: 'Su cuidador ve un resumen',
-                onTap: () => _handleModeTap(3),
-              ),
-              const Spacer(),
-              Text(
-                'Puede cambiar esto cuando quiera.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodySecondary,
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

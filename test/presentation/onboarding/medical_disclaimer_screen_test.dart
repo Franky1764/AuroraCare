@@ -3,49 +3,92 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aurora_care/presentation/onboarding/medical_disclaimer_screen.dart';
 
+ElevatedButton _continueButton(WidgetTester tester) =>
+    tester.widget(find.widgetWithText(ElevatedButton, 'Entendido, continuar'));
+
 void main() {
   testWidgets(
-      'MedicalDisclaimerScreen muestra los 3 párrafos y el botón, sin '
-      'boton de volver ni de omitir', (WidgetTester tester) async {
+    'MedicalDisclaimerScreen muestra los 3 párrafos, la casilla y el botón, '
+    'sin botón de omitir',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: MedicalDisclaimerScreen()),
+      );
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is RichText &&
+              widget.text.toPlainText().contains(
+                'AuroraCare no diagnostica ninguna enfermedad.',
+              ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Es una herramienta de bienestar para ejercitar la mente.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Ante cualquier duda de salud, hable con su médico.'),
+        findsOneWidget,
+      );
+      expect(find.text('Entiendo y acepto lo anterior'), findsOneWidget);
+      expect(find.byType(Checkbox), findsOneWidget);
+      expect(
+        find.widgetWithText(ElevatedButton, 'Entendido, continuar'),
+        findsOneWidget,
+      );
+
+      expect(find.textContaining('Omitir'), findsNothing);
+      expect(find.textContaining('Saltar'), findsNothing);
+      expect(find.byIcon(Icons.close), findsNothing);
+    },
+  );
+
+  testWidgets('el botón está deshabilitado hasta marcar la casilla', (
+    WidgetTester tester,
+  ) async {
+    var accepted = false;
+
     await tester.pumpWidget(
-      const MaterialApp(
-        home: MedicalDisclaimerScreen(),
+      MaterialApp(
+        home: MedicalDisclaimerScreen(onAccept: () => accepted = true),
       ),
     );
 
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is RichText &&
-            widget.text.toPlainText().contains(
-                  'AuroraCare no diagnostica ninguna enfermedad.',
-                ),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Es una herramienta de bienestar para ejercitar la mente.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Ante cualquier duda de salud, hable con su médico.'),
-      findsOneWidget,
-    );
-    expect(
+    expect(_continueButton(tester).onPressed, isNull);
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    expect(_continueButton(tester).onPressed, isNotNull);
+
+    await tester.tap(
       find.widgetWithText(ElevatedButton, 'Entendido, continuar'),
-      findsOneWidget,
     );
-
-    expect(find.byType(AppBar), findsNothing);
-    expect(find.byType(BackButton), findsNothing);
-    expect(find.byIcon(Icons.arrow_back), findsNothing);
-    expect(find.textContaining('Omitir'), findsNothing);
-    expect(find.textContaining('Saltar'), findsNothing);
-    expect(find.byIcon(Icons.close), findsNothing);
+    await tester.pump();
+    expect(accepted, isTrue);
   });
 
-  testWidgets('MedicalDisclaimerScreen no se cierra con el botón atrás',
-      (WidgetTester tester) async {
+  testWidgets('tocar el texto marca y desmarca la casilla', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: MedicalDisclaimerScreen()));
+
+    await tester.tap(find.text('Entiendo y acepto lo anterior'));
+    await tester.pump();
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(_continueButton(tester).onPressed, isNotNull);
+
+    await tester.tap(find.text('Entiendo y acepto lo anterior'));
+    await tester.pump();
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+    expect(_continueButton(tester).onPressed, isNull);
+  });
+
+  testWidgets('existe un botón de volver en el AppBar y permite retroceder', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
@@ -68,10 +111,11 @@ void main() {
     await tester.tap(find.text('Abrir'));
     await tester.pumpAndSettle();
     expect(find.byType(MedicalDisclaimerScreen), findsOneWidget);
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(BackButton), findsOneWidget);
 
-    // Simula el botón físico/gesto de atrás de Android.
-    await tester.binding.handlePopRoute();
+    await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.byType(MedicalDisclaimerScreen), findsOneWidget);
+    expect(find.byType(MedicalDisclaimerScreen), findsNothing);
   });
 }
